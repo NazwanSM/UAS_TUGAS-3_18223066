@@ -1,70 +1,56 @@
-# SiskamLinked 
+# SiskamLinked - Admin Dashboard
 
-**Sistem Keamanan Lingkungan Terpadu** - Aplikasi web untuk manajemen keamanan lingkungan yang menghubungkan warga dengan petugas keamanan secara real-time.
+**Portal Admin Sistem Keamanan Lingkungan Terpadu** - Aplikasi web untuk manajemen dan monitoring keamanan lingkungan dengan integrasi dua microservice (Patrol Service dan Incident Service).
 
 ## Deskripsi
 
-SiskamLinked adalah aplikasi berbasis React yang menyediakan antarmuka untuk:
-- **Warga**: Melaporkan kejadian darurat dan melihat petugas yang sedang bertugas
-- **Petugas**: Melakukan check-in/check-out dan menerima penugasan
-- **Admin**: Memantau laporan masuk dan menugaskan petugas ke lokasi kejadian
+SiskamLinked Admin adalah aplikasi React yang menyediakan dashboard untuk administrator untuk:
+- **Monitoring real-time** laporan kejadian dari warga
+- **Manajemen petugas** patroli yang sedang bertugas
+- **Penugasan petugas** ke laporan kejadian dengan integrasi kedua microservice
 
-## Arsitektur Microservice
+## Arsitektur Integrasi Microservice
 
-Aplikasi ini mengintegrasikan **2 microservice** yang berjalan secara independen:
+Aplikasi ini mengintegrasikan **2 microservice** yang berjalan independen dari layanan lain:
 
-| Service | Deskripsi | URL |
-|---------|-----------|-----|
-| **Patrol Service** | Manajemen petugas keamanan, absensi (check-in/out), dan penjadwalan | `http://18223066.tesatepadang.space` |
-| **Incident Service** | Manajemen laporan kejadian dari warga | `http://18223070.tesatepadang.space` |
+| Service | Deskripsi | Port |
+|---------|-----------|------|
+| **Patrol Service** | Manajemen petugas keamanan, autentikasi, dan data petugas aktif | 18223066 |
+| **Incident Service** | Manajemen laporan kejadian/incident dari warga | 18223070 |
 
-### Diagram Arsitektur
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    SiskamLinked Frontend                     │
-│                      (React + Vite)                          │
-└─────────────────────┬───────────────────┬───────────────────┘
-                      │                   │
-                      ▼                   ▼
-        ┌─────────────────────┐ ┌─────────────────────┐
-        │   Patrol Service    │ │  Incident Service   │
-        │  (18223066)         │ │  (18223070)         │
-        │                     │ │                     │
-        │ • Officers CRUD     │ │ • Incidents CRUD    │
-        │ • Check-in/out      │ │ • Report submission │
-        │ • Schedules         │ │ • Assignment        │
-        │ • Authentication    │ │                     │
-        └─────────────────────┘ └─────────────────────┘
-```
 
 ## Fitur Utama
 
 ### 1. Halaman Beranda (`/`)
-- Landing page dengan akses cepat ke fitur utama
-- Tombol "Laporkan Kejadian" untuk warga
-- Tombol "Login Petugas" untuk admin/petugas
+- Landing page portal admin
+- Tombol "Login Petugas" untuk masuk ke dashboard
+- Tombol "Dashboard" untuk akses langsung (jika sudah login)
 
-### 2. Lapor Kejadian (`/report`)
-- Form pelaporan kejadian darurat (pencurian, kebakaran, medis, dll)
-- Melihat daftar petugas yang sedang aktif bertugas
-- **Fitur unggulan**: Setelah submit laporan, sistem menampilkan petugas terdekat beserta nomor telepon yang bisa langsung dihubungi
+### 2. Login (`/login`)
+- Autentikasi untuk admin/petugas
+- Integrase dengan Patrol Service
+- Token-based authentication
 
-### 3. Login Petugas (`/login`)
-- Autentikasi untuk petugas dan admin
-- Default credentials: `admin` / `admin123`
+### 3. Dashboard Pos Komando (`/dashboard`) ⭐
+Dashboard utama yang mengintegrasikan kedua microservice:
 
-### 4. Dashboard Pos Komando (`/dashboard`)
-- Monitoring laporan masuk secara real-time
-- Melihat status petugas yang sedang bertugas
-- Menugaskan petugas ke laporan yang masuk
-- Auto-refresh data setiap 30 detik
+#### Fitur Patrol Service (Anda)
+- **Petugas Aktif**: Daftar real-time petugas yang sedang bertugas
+- **Informasi Petugas**: Nama, posisi, nomor telepon, dan lokasi
+- **Total Petugas**: Statistik petugas aktif dan standby
 
-### 5. Sistem Absensi (`/checkinout`)
-- Check-in petugas saat mulai bertugas
-- Check-out petugas saat selesai bertugas
-- Riwayat absensi dengan durasi kerja
-- Status real-time petugas (ON DUTY / OFF DUTY)
+#### Fitur Incident Service
+- **Laporan Masuk**: Monitoring laporan kejadian dari warga secara real-time
+- **Detail Laporan**: Lokasi, jenis kejadian, deskripsi, dan pelapor
+- **Penugasan Petugas**: Assign petugas aktif ke laporan yang masuk
+- **Status Laporan**: Menunggu / Ditangani
+
+#### Stats & Monitoring
+- Total petugas aktif
+- Total petugas (semua)
+- Laporan baru (menunggu penugasan)
+- Total semua laporan
+- Auto-refresh setiap 30 detik
 
 ## Tech Stack
 
@@ -115,14 +101,12 @@ Aplikasi ini mengintegrasikan **2 microservice** yang berjalan secara independen
 ## Struktur Project
 
 ```
-src/
-├── App.jsx                 # Root component & routing
-├── main.jsx               # Entry point
-├── index.css              # Global styles
-├── components/
-│   └── Navbar.jsx         # Navigation component
+src/bar admin
 ├── pages/
-│   ├── Dashboard.jsx      # Admin dashboard
+│   ├── Dashboard.jsx      # Dashboard utama (Integrasi 2 service)
+│   └── Login.jsx          # Login page
+└── services/
+    └── api.js             # API client (Patrol + Incident Service)
 │   ├── Login.jsx          # Login page
 │   ├── Report.jsx         # Incident report form
 │   └── CheckInOut.jsx     # Officer attendance
@@ -134,57 +118,43 @@ src/
 
 ### Patrol Service (18223066)
 
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| POST | `/auth/login` | Login user |
-| GET | `/officers` | Get all officers |
-| GET | `/officers?status=on_duty` | Get active officers |
-| POST | `/officers/:id/attendance` | Check-in/Check-out |
-| GET | `/officers/:id/attendance` | Get attendance history |
-
-### Incident Service (18223070)
+| Method | Endpoint Milik Anda)
 
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| GET | `/incidents` | Get all incidents |
-| POST | `/incidents` | Create new incident |
-| PUT | `/incidents/:id` | Update incident (assign officer) |
+| POST | `/auth/login` | Login admin/petugas |
+| GET | `/officers` | Get semua petugas |
+| GET | `/officers?status=on_duty` | Get petugas aktif |
 
-## Cara Penggunaan
+### Incident Service (Milik Teman)
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| GET | `/incidents` | Get semua laporan |
+| PUT | `/incidents/:id` | Assign petugas ke laporan
 
 ### Untuk Warga (Public)
 
 1. Buka halaman utama atau langsung ke `/report`
-2. Isi form laporan:
-   - Nama pelapor
-   - Lokasi kejadian
-   - Jenis kejadian
-   - Deskripsi
-3. Klik "KIRIM LAPORAN DARURAT"
-4. Sistem akan menampilkan petugas terdekat dengan nomor telepon
-5. Klik nomor telepon untuk langsung menghubungi
+2. Isi forAdmin
 
-### Untuk Petugas
-
-1. Login melalui `/login`
-2. Akses halaman Check-in/out (`/checkinout`)
-3. Klik "Check-In" saat mulai bertugas
-4. Klik "Check-Out" saat selesai bertugas
-
-### Untuk Admin
-
-1. Login melalui `/login` (admin/admin123)
-2. Akses Dashboard (`/dashboard`)
-3. Monitor laporan yang masuk
-4. Tugaskan petugas ke laporan dengan memilih dari dropdown
-5. Pantau status petugas yang sedang aktif
-
+1. **Login** ke halaman `/login`
+   - Username & password dari Patrol Service
+   
+2. **Akses Dashboard** di `/dashboard`
+   - Lihat petugas aktif dari Patrol Service
+   - Monitor laporan dari Incident Service
+   - Assign petugas ke laporan yang masuk
+   
+3. **Penugasan Petugas**
+   - Pilih laporan dengan status "Menunggu"
+   - Pilih petugas dari dropdown "Tugaskan Petugas"
+   - Data terintegrasi otomatis ke Incident Service
 
 ## Developer
 
-| NIM | Nama | Role |
-|-----|------|------|
-| 18223066 | Nazwan Siddqi Muttaqin | Patrol Service |
-| 18223070 | Muhammad Refino Ramadhan | Incident Service|
-
+| NIM | Nama 
+|-----|------
+| 18223066 | Nazwan Siddqi Muttaqin 
+| 18223070 | Muhammad Refino Ramadhan 
 ---
