@@ -34,7 +34,7 @@ Aplikasi ini mengintegrasikan **2 microservice** yang berjalan independen dari l
 ### 3. Dashboard Pos Komando (`/dashboard`) ⭐
 Dashboard utama yang mengintegrasikan kedua microservice:
 
-#### Fitur Patrol Service (Anda)
+#### Fitur Patrol Service
 - **Petugas Aktif**: Daftar real-time petugas yang sedang bertugas
 - **Informasi Petugas**: Nama, posisi, nomor telepon, dan lokasi
 - **Total Petugas**: Statistik petugas aktif dan standby
